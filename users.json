@@ -1,0 +1,22 @@
+{
+    "Krish": {
+        "password": "user123",
+        "data": [
+            {
+                "amount": 100000.0,
+                "desc": "salary as a SDE -II",
+                "type": "Income"
+            },
+            {
+                "amount": 20000.0,
+                "desc": "Credit-Card",
+                "type": "Expense"
+            },
+            {
+                "amount": 20000.0,
+                "desc": "Shopping",
+                "type": "Expense"
+            }
+        ]
+    }
+}
