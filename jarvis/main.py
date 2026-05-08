@@ -1,4 +1,7 @@
-from jarvis import brain
+try:
+    from jarvis import brain
+except ImportError:
+    import brain
 import sys
 
 def main():

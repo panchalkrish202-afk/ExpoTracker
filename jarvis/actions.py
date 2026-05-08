@@ -2,41 +2,61 @@ import subprocess
 import webbrowser
 import os
 import platform
-import shlex
+import re
+import urllib.parse
+
+def sanitize_app_name(name):
+    """Sanitizes application name to prevent argument injection."""
+    # Allow only alphanumeric, spaces, dots, and underscores.
+    # Importantly, prevent names starting with hyphens.
+    if not name or name.startswith('-'):
+        return None
+    # Use regex to keep only safe characters
+    sanitized = re.sub(r'[^a-zA-Z0-9._\s-]', '', name)
+    return sanitized.strip()
 
 def open_app(app_name):
     """Opens an application based on the OS securely."""
+    sanitized_name = sanitize_app_name(app_name)
+    if not sanitized_name:
+        return f"Invalid application name: {app_name}"
+
     system = platform.system()
     try:
         if system == "Windows":
-            # Use subprocess with a list to avoid shell injection
-            subprocess.Popen(["cmd", "/c", "start", "", app_name])
+            # Using list with Popen is safer
+            subprocess.Popen(["cmd", "/c", "start", "", sanitized_name])
         elif system == "Darwin":  # macOS
-            subprocess.run(["open", "-a", app_name], check=True)
+            subprocess.run(["open", "-a", sanitized_name], check=True)
         else:  # Linux
-            subprocess.Popen([app_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return f"Opening {app_name}..."
+            subprocess.Popen([sanitized_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return f"Opening {sanitized_name}..."
     except Exception as e:
-        return f"Failed to open {app_name}: {str(e)}"
+        return f"Failed to open {sanitized_name}: {str(e)}"
 
 def close_app(app_name):
     """Closes an application based on the OS securely."""
+    sanitized_name = sanitize_app_name(app_name)
+    if not sanitized_name:
+        return f"Invalid application name: {app_name}"
+
     system = platform.system()
     try:
         if system == "Windows":
-            subprocess.run(["taskkill", "/f", "/im", f"{app_name}.exe"], check=True)
+            subprocess.run(["taskkill", "/f", "/im", f"{sanitized_name}.exe"], check=True)
         elif system == "Darwin":  # macOS
-            subprocess.run(["pkill", "-i", app_name], check=True)
+            subprocess.run(["pkill", "-i", sanitized_name], check=True)
         else:  # Linux
-            subprocess.run(["pkill", app_name], check=True)
-        return f"Closing {app_name}..."
+            # Use -- to ensure sanitized_name is treated as a positional argument, not a flag
+            subprocess.run(["pkill", "--", sanitized_name], check=True)
+        return f"Closing {sanitized_name}..."
     except Exception as e:
-        return f"Failed to close {app_name}: {str(e)}"
+        return f"Failed to close {sanitized_name}: {str(e)}"
 
 def google_search(query):
-    """Performs a Google search."""
-    # webbrowser.open handles URL encoding to some extent, but query is just a parameter here.
-    url = f"https://www.google.com/search?q={query}"
+    """Performs a Google search with proper URL encoding."""
+    encoded_query = urllib.parse.quote(query)
+    url = f"https://www.google.com/search?q={encoded_query}"
     webbrowser.open(url)
     return f"Searching Google for: {query}"
 
